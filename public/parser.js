@@ -37,7 +37,9 @@
     RESERVED_WORD = {
       p: "P",
       "if": "IF",
-      then: "THEN"
+      then: "THEN",
+      "while": "WHILE",
+      "do" : "DO"
     };
     make = function(type, value) {
       return {
@@ -109,7 +111,109 @@
         throw ("Syntax Error. Expected " + t + " found '") + lookahead.value + "' near '" + input.substr(lookahead.from) + "'";
       }
     };
-    
+
+    statements = function() {
+     var result;
+     result = [statement()];
+
+     while (lookahead && lookahead.type === ";") {
+       console.log("si ;")
+       match(";");
+       if(lookahead && lookahead.type != "}")
+          result.push(statement());
+     }
+     if (result.length === 1) {
+       return result[0];
+     } else {
+       return result;
+     }
+   };
+   statement = function() {
+     var left, result, right;
+     result = null;
+     if (lookahead && lookahead.type === "ID") {
+       left = {
+         type: "ID",
+         value: lookahead.value
+       };
+       match("ID");
+       match("=");
+       right = expression();
+       result = {
+         type: "=",
+         left: left,
+         right: right
+       };
+     } else if (lookahead && lookahead.type === "P") {
+       match("P");
+       right = expression();
+       result = {
+         type: "P",
+         value: right
+       };
+     } else if (lookahead && lookahead.type === "IF") {
+       match("IF");
+       if (lookahead.type === "("){
+         match("(");
+         left = condition();
+         match(")");
+       }else {
+         left = condition();
+       }
+       match("THEN");
+       if(lookahead && lookahead.type === "{"){
+         match("{");
+         right = statements();
+         match("}");
+       }else{
+         right = statement();
+       }
+       result = {
+         type: "IF",
+         left: left,
+         right: right
+       };
+     }else if (lookahead && lookahead.type === "WHILE") {
+       match("WHILE");
+       if (lookahead.type === "("){
+         match("(");
+         left = condition();
+         match(")");
+       }else {
+         left = condition();
+       }
+       match("DO");
+       if(lookahead && lookahead.type === "{"){
+         match("{");
+         right = statements();
+         match("}");
+       }else{
+         right = statement();
+       }
+       result = {
+         type: "WHILE",
+         left: left,
+         right: right
+       };
+     } else {
+       throw "Syntax Error. Expected identifier but found " + (lookahead ? lookahead.value : "end of input") + (" near '" + (input.substr(lookahead.from)) + "'");
+     }
+     return result;
+   };
+   condition = function() {
+     var left, result, right, type;
+     left = expression();
+     type = lookahead.value;
+     match("COMPARISON");
+     right = expression();
+     result = {
+       type: type,
+       left: left,
+       right: right
+     };
+     return result;
+   };
+
     expression = function() {
       var result, right, type;
       result = term();
@@ -165,7 +269,7 @@
       return result;
     };
 
-    tree = expression(input);
+    tree = statements(input);
     if (lookahead != null) {
       throw "Syntax Error parsing statements. " + "Expected 'end of input' and found '" + input.substr(lookahead.from) + "'";
     }
