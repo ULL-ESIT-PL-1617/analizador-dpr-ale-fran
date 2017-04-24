@@ -6,19 +6,85 @@
   suite('parser', function() {
     setup(function() {
     });
-    test('Numbers are parsed correctly', () => {
-      original.value = '4';
-      $('button').trigger('click');
-      console.log(OUTPUT.innerHTML);
-      assert.match(OUTPUT.innerHTML, /"type":\s*"NUM"(.|\n)*"value":\s*4/i);
+    test('Operations', () => {
+      var result = parse('a = 3+2');
+      var tree = {
+                  "type": "=",
+                  "left": {
+                    "type": "ID",
+                    "value": "a"
+                  },
+                  "right": {
+                    "type": "+",
+                    "left": {
+                      "type": "NUM",
+                      "value": 3
+                    },
+                    "right": {
+                      "type": "NUM",
+                      "value": 2
+                    }
+                  }
+                }
+      assert.deepEqual(result, tree);
     });
-    test('Multiplications are parsed correctly', () => {
-      var result = parse('4*2');
-      console.log(result);
-      assert.deepEqual(result, {type: "*", 
-                                left: { type: "NUM", value: 4}, 
-                                right: {type: "NUM", value: 2}
-      });
+    test('Conditions', () => {
+      var result = parse('if a == 1 then b = 4');
+      var tree =  {"type": "IF",
+                   "left": { "type": "==",
+                             "left": { "type": "ID",
+                                       "value": "a"
+                                    },
+                            "right": { "type": "NUM",
+                                       "value": 1
+                                     }
+                           },
+                   "right": { "type": "=",
+                              "left": { "type": "ID",
+                                        "value": "b"
+                                      },
+                             "right": { "type": "NUM",
+                                          "value": 4
+                                      }
+                            }
+                 }
+      assert.deepEqual(result, tree);
+    });
+    test('Loops', () => {
+      var result = parse('while (x == 1) do {a = 2*3}');
+      var tree =  {
+                  "type": "WHILE",
+                  "left": {
+                    "type": "==",
+                    "left": {
+                      "type": "ID",
+                      "value": "x"
+                    },
+                    "right": {
+                      "type": "NUM",
+                      "value": 1
+                    }
+                  },
+                  "right": {
+                    "type": "=",
+                    "left": {
+                      "type": "ID",
+                      "value": "a"
+                    },
+                    "right": {
+                      "type": "*",
+                      "left": {
+                        "type": "NUM",
+                        "value": 2
+                      },
+                      "right": {
+                        "type": "NUM",
+                        "value": 3
+                      }
+                    }
+                  }
+                }
+      assert.deepEqual(result, tree);
     });
     test('Bad expressions throw exceptions', () => {
       assert.throws(() => parse('3 + (4+2))'), /Syntax\s+Error/i);
