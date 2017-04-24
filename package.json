@@ -4,7 +4,8 @@
   "description": "Analizador DPR",
   "main": "app.js",
   "directories": {
-    "test": "tests"
+    "test": "tests",
+    "start": "node app.js"
   },
   "dependencies": {
     "body-parser": "*",
